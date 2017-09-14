@@ -8,7 +8,5 @@ install.packages(devtools)
 library(devtools)
 install_github('charliex210/sctools')
 ```
----
-
 # Contributing
 We welcome any bug reports, enhancement requests, and other contributions. To submit a bug report or enhancement request, please put it in `issues`. For more substantial contributions, please fork this repo, push your changes to your fork, and submit a pull request with a good commit message. For more general discussions or troubleshooting, please email <lin_lihui@gibh.ac.cn>.
