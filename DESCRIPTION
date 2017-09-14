@@ -1,0 +1,19 @@
+Package: sctools
+Version: 0.1
+Title: Tools for single cell RNAseq analysis
+Description: Statistic methods for gene expression data analysis
+Authors@R: person("Lin", "Lihui", email = "lin_lihui@gibh.ac.cn", role = c("aut", "cre"))
+License: MIT
+Encoding: UTF-8
+LazyData: true
+ByteCompile: true
+RoxygenNote: 6.0.1
+Imports:
+    apcluster,
+    grDevices,
+    glmnet,
+    nnet,
+    pheatmap,
+    stats
+Suggests:
+    rPython
