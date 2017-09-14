@@ -2,7 +2,7 @@
 sctools is a R package for single cell RNA-seq data analysis of dynamic biological process. sctools help users to preprocess their raw RNA-seq data, and further look insight the gene expression pattern. Some state-of-art methods are available, including dimensionality reduction, regression analysis and clustering.
 
 # How to install sctools?
-Install package from GitHub
+To install development version from GitHub, use the __devtools__ package,
 ```R
 install.packages(devtools)
 library(devtools)
