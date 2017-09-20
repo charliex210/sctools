@@ -2,18 +2,18 @@
 % Please edit documentation in R/GenePattern.R
 \name{alter_label}
 \alias{alter_label}
-\title{Re-ordering clustering labels}
+\title{Re-ordering clusters.}
 \usage{
 alter_label(ori_labels, re_labels)
 }
 \arguments{
-\item{ori_labels}{Origin labels}
+\item{ori_labels}{Origin labels.}
 
-\item{re_labels}{Re-ordered labels}
+\item{re_labels}{Re-ordered labels.}
 }
 \value{
-New labels after ordering
+New labels after ordering.
 }
 \description{
-Re-ordering clustering labels for heatmpa
+Re-ordering clusters for heatmap.
 }

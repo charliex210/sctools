@@ -1,7 +1,7 @@
 Package: sctools
 Version: 0.1
 Title: Tools for single cell RNAseq analysis
-Description: Statistic methods for gene expression data analysis
+Description: Statistic methods for gene expression data analysis.
 Authors@R: person("Lin", "Lihui", email = "lin_lihui@gibh.ac.cn", role = c("aut", "cre"))
 License: MIT
 Encoding: UTF-8
@@ -9,11 +9,25 @@ LazyData: true
 ByteCompile: true
 RoxygenNote: 6.0.1
 Imports:
+    AnnotationDbi,
     apcluster,
-    grDevices,
+    BiocGenerics,
+    corpcor,
     glmnet,
+    GO.db,
+    ggplot2,
+    ggthemes,
+    grDevices,
+    jackstraw,
+    magrittr,
+    methods,
+    networkD3,
     nnet,
+    org.Mm.eg.db,
+    org.Hs.eg.db,
     pheatmap,
-    stats
+    stats,
+    TSP,
+    topGO
 Suggests:
     rPython
