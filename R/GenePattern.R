@@ -468,47 +468,15 @@ find_order <- function(mat,
   return(path)
 }
 
-#' Retrieving genes in GO term.
-#' 
-#' Retrieving genes in GO term.
-#' @import org.Mm.eg.db
-#' @import org.Hs.eg.db
-#' @importFrom AnnotationDbi as.list mappedkeys
-#' @param term GO term id. For example, "GO:000830".
-#' @param species Link to mouse(mMus) or human(Hs) database.
-#' @return A vector of Ensembl gene ids in given GO term.
-#' @export
-getGOEnsembl <- function(term, species = 'mMus'){
-  if(!(species %in% c('mMus','Hs'))){
-    stop("'species' needs to be either 'mMus' or 'Hs'")
-  }
-  if(species=='mMus'){
-    xxGO <- as.list(org.Mm.egGO2EG)
-    x <- org.Mm.egENSEMBL
-  }
-  else{
-    xxGO <- as.list(org.Hs.egGO2EG)
-    x <- org.Hs.egENSEMBL
-  }
-  EG <- unlist(xxGO[term])
-  #get ENSEMBLE ids
-  mapped_genes <- mappedkeys(x)
-  xxE <- as.list(x[mapped_genes])
-  ens_ids <- unlist(xxE[EG])  
-  
-  return(ens_ids)
-  
-}
-  
 #' Gene ontology enrichment analysis of gene clusters.
 #' 
 #' Perform GO analysis using topGO.
 #' @import topGO
 #' @import org.Mm.eg.db
-#' @import GO.db
 #' @import ggplot2
 #' @import ggthemes
-#' @importFrom AnnotationDbi as.list select
+#' @importFrom GO.db GOTERM
+#' @importFrom AnnotationDbi as.list select keys
 #' @importFrom methods new
 #' @importFrom utils write.csv
 #' @param gene_labels Data frame of gene names with cluster labels.
@@ -538,7 +506,8 @@ go_enrich <- function(gene_labels,
     dir.create(save_dir)
   }
   cl_genes <- rownames(gene_labels)
-  anno <- select(org.Mm.eg.db, keys=keys, columns = c("SYMBOL"),keytype = "ENSEMBL")
+  keys <- keys(org.Mm.eg.db,"ENSEMBL")
+  anno <- select(org.Mm.eg.db, keys = keys, columns = c("SYMBOL"),keytype = "ENSEMBL")
   anno <- anno[!duplicated(anno$ENSEMBL) & !duplicated(anno$SYMBOL),]
   GOID2TERM <- as.list(GOTERM)
   
@@ -546,8 +515,6 @@ go_enrich <- function(gene_labels,
   stat_res <- list()
   for (cl in unique(gene_labels$labels)){
     gsym <- cl_genes[gene_labels == cl]
-    keys <- keys(org.Mm.eg.db,"ENSEMBL")
-    
     sub_ensg <- anno$ENSEMBL[!is.na(match(anno$SYMBOL, gsym))]
     geneList <- factor(as.integer(anno$ENSEMBL %in% sub_ensg))
     names(geneList) <- anno$ENSEMBL
