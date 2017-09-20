@@ -24,7 +24,6 @@ Imports:
     networkD3,
     nnet,
     org.Mm.eg.db,
-    org.Hs.eg.db,
     pheatmap,
     stats,
     TSP,
