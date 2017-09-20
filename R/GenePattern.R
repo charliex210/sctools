@@ -149,7 +149,6 @@ apclusK <- function(mat,
 #' Retrieve genes with high correlation with existing pattern.
 #' 
 #' Retrieve genes with high correlation with the exemplars of affinity propagation clustering results.
-#' @importFrom BiocGenerics rowSums
 #' @param mat Gene expression matrix, columns are cells and rows are genes.
 #' @param apres Dataframe of affinity propagation clustering results.
 #' @param q The treshold of adjust p-value of correlation coefficient. Genes with p-value less than q will be retrieved to the gene expression matrix
