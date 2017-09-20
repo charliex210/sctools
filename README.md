@@ -4,7 +4,7 @@ sctools is a R package for single cell RNA-seq data analysis of dynamic biologic
 # How to install sctools?
 To install development version from GitHub, use the __devtools__ package,
 ```R
-install.packages(devtools)
+install.packages("devtools")
 library(devtools)
 install_github('charliex210/sctools')
 ```
