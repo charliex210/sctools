@@ -56,7 +56,7 @@ sig.var <- function(mat,
                     adj.method = "fdr", 
                     log = TRUE, 
                     scale = TRUE, 
-                    verbose = TRUE,
+                    verbose = FALSE,
                     ...){
   mat <- as.matrix(mat)
   if (log){
@@ -65,8 +65,8 @@ sig.var <- function(mat,
   if (scale){
     mat <- t(scale(t(mat)))
   }
-  cat(head(mat))
-  js.pca <- jackstraw.PCA(mat, r = r, s = s, B = B, verbose = TRUE, ...)
+  # cat(head(mat))
+  js.pca <- jackstraw.PCA(mat, r = r, s = s, B = B, verbose = verbose, ...)
   padj <- p.adjust(js.pca$p.value, method = adj.method)
   names(padj) <- rownames(mat)
   js.pca$padj <- padj
@@ -118,7 +118,131 @@ snn_cliq <- function(dmat,
                Group = "group", opacity = 0.8,
                fontSize = 20,zoom = TRUE,legend=TRUE) %>%
   saveNetwork(file = 'SNN-Network.html')
+  cat("save SNN-Network to SNN-Network.html")
   
   return(list(cell_labels=cell_labels,snn=links))
+  
+}
+
+#' Spectral clustering.
+#' 
+#' Clustering cells based on adaptive gauss kernel.
+#' @importFrom SNFtool spectralClustering estimateNumberOfClustersGivenGraph
+#' @param Dist Paire-wised distance matrix.
+#' @param numk Number of clusters number. If NULL, estimate number will be used.
+#' @param ka To equalize the number of neighbors we set the value sigma(i) for each cell i to the distance to its kath nearest neighbor. Default is 10.
+#' @param kNN Additional affinities beyond Kth nearest neighbor are set to zero. If NULL, kNN will be set the 3ka.
+#' @param type The variants of spectral clustering to use, see \code{\link[SNFtool]{spectralClustering}}.
+#' @param estimateRage Estimate range.
+#' @param scaleDist scale distance.
+#' @return Spectral clustering labels, and affinity matrix.
+#' @references David van Dijk et al. MAGIC: A diffusion-based imputation method reveals gene-gene interactions in single-cell RNA-sequencing data. BioRxiv 2017.
+#' @references Bo Wang et al. Similarity network fusion for aggregating data types on a genomic scale. Nature Methods 2014.
+#' @export
+aspecc <- function(Dist, numk = NULL, ka=10, kNN=NULL, type = 3, estimateRage = 3:8, scaleDist = TRUE){
+  
+  d <- as.matrix(Dist)
+  if (scaleDist){
+    d <- scale(d, center = FALSE)
+  }
+  N = nrow(d)
+  if (is.null(kNN)){
+    kNN <- ka * 3
+  }
+  
+  # Adapt kernel, the kernel is wider in sparse areas and smaller in dense areas.
+  cat("Calculate adative kernel")
+  sigma = matrix(apply(d, 1, sort)[ka+1,], nrow = N, ncol = N)
+  W = exp(-1 * as.matrix(d^2)/sigma)
+  if (kNN < N-1){
+    Kthr = apply(W, 1, sort, decreasing = TRUE)[kNN+1,]
+    for (i in 1:N){
+      nn = W[i,]
+      nn[nn < Kthr[i]] = 0
+      W[i,] = nn
+    }
+  }
+  W = (W + t(W)) / 2
+  estimationResult = estimateNumberOfClustersGivenGraph(W, estimateRage)
+  print(as.data.frame(estimationResult,
+                      col.names = c("K1","K12","K2","K22"),
+                      row.names = "EstimateK"))
+  if (is.null(numk)){
+    numk <- estimationResult[[1]]
+  }
+  labels = spectralClustering(W, numk)
+
+  return(list(labels = labels, affinity = W))
+  
+}
+
+#' Extract level of reprogramming cells.
+#' 
+#' Extract level of reprogramming cells.
+#' @param mat Expression matrix.
+#' @return factor represents timepoints
+#' @export
+annofactor <- function(mat){
+  cells <- colnames(mat)
+  days <- gsub("(mef|osk_d0|osk_d1|osk_d2|osk_d3|osk_d4|osk_d5|osk_d6|osk_d7|osk_d8|ips|ovsvk_d0|ovsvk_d1|ovsvk_d2|ovsvk_d3|ovsvk_d4|esc).*",
+               "\\1",
+               cells)
+  lv <- c("mef","osk_d0","osk_d1","osk_d2","osk_d3","osk_d4","osk_d5","osk_d6","osk_d7","osk_d8","ips","ovsvk_d0","ovsvk_d1","ovsvk_d2","ovsvk_d3","ovsvk_d4","esc")
+  
+  return(factor(days,levels = lv[lv %in% unique(days)]))
+  
+}
+
+#' Detect outliers.
+#' 
+#' Use Isolation Forest algorithm to detect outliers of cells.
+#' @description The implement of iforest is dependent on numpy, scipy and sklearn in python, make sure that they have been installed in your enviroment.
+#' @param mat Gene expression matrix, columns are cells and rows are genes.
+#' @param n_estimators The number of base estimators in the ensemble.
+#' @param outliers_fraction float in (0, 0.5). The amount of contamination of the data set, i.e. the proportion of outliers in the data set. Used when fitting to define the threshold on the decision function.
+#' @param random_state RandomState instance.
+#' @param n_jobs The number of jobs to run in parallel for both `fit` and `predict`. If -1, then the number of jobs is set to the number of cores.
+#' @param verbose Controls the verbosity of the tree building process.
+#' @return list of outlier score and indice.
+#' @export
+#' @references Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest." Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
+#' @references Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based anomaly detection." ACM Transactions on Knowledge Discovery from Data (TKDD) 6.1 (2012): 3.
+iforest <- function(mat,
+                    n_estimators = 1000,
+                    outliers_fraction = 0.1,
+                    random_state = 1,
+                    n_jobs = 1){
+  # require(rPython)
+  mat <- as.matrix(mat)
+  cells <- colnames(mat)
+  rPython::python.exec("import numpy as np;from sklearn.ensemble import IsolationForest")
+  rPython::python.assign("mat_vector", as.vector(mat))
+  rPython::python.assign("shape",dim(mat))
+  rPython::python.assign("n_estimators", n_estimators)
+  rPython::python.assign("outliers_fraction", outliers_fraction)
+  rPython::python.assign("random_state", random_state)
+  rPython::python.assign("n_jobs", n_jobs)
+  rPython::python.exec("mat = np.array(mat_vector);mat = np.reshape(mat,shape)")
+  rPython::python.exec("iForest = IsolationForest(max_samples='auto',\
+                       n_estimators = n_estimators,\
+                       contamination = outliers_fraction,\
+                       random_state = np.random.RandomState(random_state),\
+                       n_jobs = n_jobs)")
+  cat("construct iTrees and fit the data...")
+  rPython::python.exec("iForest.fit(mat.T)")
+  rPython::python.exec("scores_pred = list(iForest.decision_function(mat.T))")
+  rPython::python.exec("y_pred = list(iForest.predict(mat.T))")
+  scores_pred <- rPython::python.get("scores_pred")
+  y_pred <- rPython::python.get("y_pred")
+  pred <- data.frame(idx = 1:length(cells),
+                     score = scores_pred, 
+                     is_outlier = y_pred,
+                     row.names = cells,
+                     stringsAsFactors = FALSE)
+  call <- list(n_estimators = n_estimators,
+               outliers_fraction = outliers_fraction,
+               random_state = random_state)
+  
+  return(list(pred = pred, call = call))
   
 }

@@ -236,7 +236,8 @@ p.cor <- function(x,
 #' @param anno_col Similar to annotation_row, but for columns.
 #' @param plot_gaps_row Make gaps on row.
 #' @param plot_gaps_col Make gaps on column.
-#' @param re_write_labels Re-write clustering labels to an ordered sequeence.
+#' @param re_write_gene_labels Re-write gene labels to an ordered sequeence.
+#' @param re_write_cell_labels Re-write cell labels to an ordered sequeence.
 #' @param ... Additional arguments passed on to pheatmap.
 #' @return Ordering cluster results.
 #' @export
@@ -260,11 +261,10 @@ cheatmap <- function(mat,
                      anno_col = NA,
                      plot_gaps_row = TRUE,
                      plot_gaps_col = TRUE,
-                     re_write_labels = FALSE,
+                     re_write_gene_labels = FALSE,
+                     re_write_cell_labels = FALSE,
                      ...){
   
-  # require(nnet)
-  # require(apcluster)
   if (!is.numeric(vmax) || !is.numeric(vmin)){
     stop("The expression boundary must be numeric")
   }
@@ -292,7 +292,7 @@ cheatmap <- function(mat,
           gaps_row <- head(cumsum(table(gene_labels)[gene_order]),-1)
         }
       }
-      if (re_write_labels){
+      if (re_write_gene_labels){
         gene_labels <- re_order(gene_labels, gene_order)
       }
     }
@@ -305,7 +305,8 @@ cheatmap <- function(mat,
     mat <- mat[makeGeneOrder,]
     output_gene_labels <- data.frame(labels=gene_labels[makeGeneOrder],row.names = rownames(mat))
     if (is.na(anno_row)){
-      anno_row = data.frame(Module=factor(output_gene_labels$labels),row.names = rownames(mat))
+      anno_row = data.frame(Module=factor(output_gene_labels$labels, levels = unique(output_gene_labels$labels)),
+                            row.names = rownames(mat))
     }
   }
   else{
@@ -314,7 +315,6 @@ cheatmap <- function(mat,
   }
   
   # Order cells
-  
   makeCellOrder <- ncol(mat)
   if (!is.null(cell_labels)){
     cluster_cols <- FALSE
@@ -325,7 +325,7 @@ cheatmap <- function(mat,
           gaps_col <- head(cumsum(table(cell_labels)[cell_order]),-1)
         }
       }
-      if (re_write_labels){
+      if (re_write_cell_labels){
         cell_labels <- re_order(cell_labels, cell_order)
       }
     }
@@ -338,7 +338,8 @@ cheatmap <- function(mat,
     mat <- mat[,makeCellOrder]
     output_cell_labels <- data.frame(labels=cell_labels[makeCellOrder],row.names = colnames(mat))
     if (is.na(anno_col)){
-      anno_col <- data.frame(Cluster = factor(output_cell_labels$labels), row.names = colnames(mat)) # bestcells = bestcells EGFP=EGFP
+      anno_col <- data.frame(Cluster = factor(output_cell_labels$labels, levels = unique(output_cell_labels$labels)), 
+                             row.names = colnames(mat)) # bestcells = bestcells EGFP=EGFP
     }
   }
   else{
@@ -438,23 +439,26 @@ re_order <- function(labs,ord_id){
 #' @importFrom stats aggregate dist
 #' @importFrom TSP as.TSP insert_dummy solve_TSP cut_tour
 #' @param mat Expression matrix, columns are cells and rows are genes.
-#' @param labels Cluster labels on the column of mat.
+#' @param labels Cluster labels on the row of mat.
 #' @param reverse Reverse the path.
 #' @param metric Metric used to compute the paired distance - default is pearson correlation distance.
 #' @param method Method to solve the TSP, see \code{\link[TSP]{solve_TSP}}.
+#' @param seed Random seed.
 #' @return Path indice of the clusters.
 #' @export
 find_order <- function(mat,
                        labels,
                        reverse = FALSE,
                        metric = "pearson",
-                       method = "farthest_insertion"){
+                       method = "farthest_insertion",
+                       seed = 1){
   if (nrow(mat) != length(labels)){
     stop("The rows are not consistent with the length of labels")
   }
   mat <- as.data.frame(mat)
   mat$labels <- labels
   m <- aggregate(. ~ labels, data = mat, FUN = "mean")[,-1]
+  set.seed(seed)
   if (metric == "pearson"){
     tsp <- insert_dummy(as.TSP(1-cor(t(m))), label = "cut")
   }
@@ -470,11 +474,11 @@ find_order <- function(mat,
 #' Gene ontology enrichment analysis of gene clusters.
 #' 
 #' Perform GO analysis using topGO.
-#' @import topGO
 #' @import org.Mm.eg.db
 #' @import ggplot2
 #' @import ggthemes
-#' @importFrom GO.db GOTERM
+#' @import GO.db
+#' @import topGO
 #' @importFrom AnnotationDbi as.list select keys
 #' @importFrom methods new
 #' @importFrom utils write.csv
@@ -496,17 +500,19 @@ go_enrich <- function(gene_labels,
                       save_dir = NA,
                       nodeSize = 30, 
                       showNodes = 15,
-                      width = 16,
-                      height = 12){
+                      topNodes=50,
+                      width = 12,
+                      height = 10){
   if (is.na(save_dir)){
     save_dir = "GO_results"
   }
   if (!dir.exists(save_dir)){
     dir.create(save_dir)
   }
+  colnames(gene_labels) <- "labels"
   cl_genes <- rownames(gene_labels)
   keys <- keys(org.Mm.eg.db,"ENSEMBL")
-  anno <- select(org.Mm.eg.db, keys = keys, columns = c("SYMBOL"),keytype = "ENSEMBL")
+  anno <- select(org.Mm.eg.db, keys=keys, columns = c("SYMBOL"),keytype = "ENSEMBL")
   anno <- anno[!duplicated(anno$ENSEMBL) & !duplicated(anno$SYMBOL),]
   GOID2TERM <- as.list(GOTERM)
   
@@ -514,16 +520,23 @@ go_enrich <- function(gene_labels,
   stat_res <- list()
   for (cl in unique(gene_labels$labels)){
     gsym <- cl_genes[gene_labels == cl]
+    
     sub_ensg <- anno$ENSEMBL[!is.na(match(anno$SYMBOL, gsym))]
     geneList <- factor(as.integer(anno$ENSEMBL %in% sub_ensg))
     names(geneList) <- anno$ENSEMBL
     
     #construct a topGOdata object
-    GOdata <- new("topGOdata",ontology="BP",allGenes=geneList,nodeSize=nodeSize, 
-                  annot=annFUN.org,mapping="org.Mm.eg.db",ID="ensembl")
+    GOdata <- new("topGOdata",
+                  ontology = "BP",
+                  allGenes = geneList,
+                  geneSel = topDiffGenes,
+                  nodeSize = nodeSize, 
+                  annot = annFUN.org,
+                  mapping = "org.Mm.eg.db",
+                  ID = "Ensembl")
     Fish.stat <- new(paste0(method,"Count"),testStatistic=GOFisherTest,name="Fisher test") #elim algorithm is more conservation than classic 
     resultFisher <- getSigGroups(GOdata,Fish.stat)
-    allRes <- GenTable(GOdata,Fis=resultFisher,topNodes=50)
+    allRes <- GenTable(GOdata, Fis = resultFisher, topNodes = topNodes)
     # pvalFis <- score(resultFisher)
     # allRes <- GenTable(GOdata,Fis=resultFisher,orderBy="elimFis",ranksOf="Fis",topNodes=50)
     
@@ -532,11 +545,12 @@ go_enrich <- function(gene_labels,
       whole_term <- c(whole_term, GOID2TERM[[id]]@Term)
     }
     allRes$Term <- whole_term
-    stat_res[[as.character(cl)]] <- stat_res
+    stat_res[[as.character(cl)]] <- allRes
     write.csv(allRes, file.path(save_dir, paste0("gene_cl", cl, ".csv")))
     
     #make bar plot for significant terms
     topRes <- allRes[1:showNodes,]
+    topRes$Fis[topRes$Fis == "< 1e-30"] <- 1e-30
     goRes <- data.frame(term = paste0(topRes$Term," (", topRes$GO.ID, ")"),
                         pval = topRes$Fis,
                         logpval = -log10(as.numeric(topRes$Fis)))
@@ -548,7 +562,7 @@ go_enrich <- function(gene_labels,
     ggsave(file.path(save_dir,paste0("gene_cl",cl,".pdf")),width = width, height = height)
     
     #Pick out the genes annotated to GO terms
-    cat("Find genes in each term...\n")
+    cat("Find genes in each term of cluster ",cl," ...\n")
     topGOid <- allRes$GO.ID
     if (!is.null(topGOid)){
       GeneInTerms <- list()
@@ -565,5 +579,149 @@ go_enrich <- function(gene_labels,
   } 
   
   return(list(stat_res=stat_res,cl_go=cl_go))
+  
+}
+
+#' Fetch genes in GO term.
+#' 
+#' Fetch ensembl ids of specific GO term id.
+#' @import org.Mm.eg.db
+#' @import org.Hs.eg.db
+#' @param term GO term id, forexample "GO:0001049".
+#' @param species Mouse or human database to used. Mouse: mMus, Human: Hs
+#' @return Ensembl id of specifc GO term
+#' @export
+FetchGO = function (term, species = "mMus"){
+  if (!(species %in% c("mMus", "Hs"))) {
+    stop("'species' needs to be either 'mMus' or 'Hs'")
+  }
+  if (species == "mMus"){
+    xxGO <- AnnotationDbi::as.list(org.Mm.egGO2EG)
+    x <- org.Mm.egENSEMBL
+  }
+  else{
+    xxGO <- AnnotationDbi::as.list(org.Hs.egGO2EG)
+    x <- org.Hs.egENSEMBL
+  }
+  BPEG <- unlist(xxGO[term])
+  mapped_genes <- AnnotationDbi::mappedkeys(x)
+  xxE <- as.list(x[mapped_genes])
+  ens_ids <- unlist(xxE[BPEG])
+  
+  return(ens_ids)
+  
+}
+
+#' Differential expreesed analysis of two conditions.
+#' 
+#' DE analysis based on DESeq2.
+#' @importFrom DESeq2 DESeqDataSetFromMatrix estimateSizeFactors DESeq results
+#' @importFrom BiocGenerics counts
+#' @param mat Expression matrix.
+#' @param cond Vector indicate the conditions of cells.
+#' @param qval Significant level to select genes.
+#' @param contrast How to compare.
+#' @return data.frame of DESeq2 results.
+#' @export
+de <- function(mat, cond, qval = 0.1, contrast=NULL){
+  
+  if (ncol(mat) != length(cond)){
+    stop("number of cells is not equal to the length of condition")
+  }
+  if (length(unique(cond)) > 2){
+    stop("de only consider comparison of two conditions")
+  }
+  if (is.null(contrast)){
+    contrast <- c("condition", unique(cond))
+  }
+  else if (length(contrast) != 2){
+    stop("a least two condition should be given")
+  }
+  else if (!all(contrast %in% cond)){
+    stop("contrast is not in condition")
+  }
+  else{
+    contrast <- c("condition", contrast)
+  }
+  countData = round(mat)
+  colData <- data.frame(condition = cond,row.names = colnames(countData))
+  
+  # construct the DESeqDataSet object from the matrix of counts
+  # and the sample information table
+  dds <- DESeqDataSetFromMatrix(countData = countData,
+                                colData = colData,
+                                design = ~ condition)
+  # Pre-filtering the dataset
+  dds <- dds[ rowSums(counts(dds)) > 1, ]
+  dds <- estimateSizeFactors(dds)
+  # Differential expression analysis (General Linear Model)
+  dds <- DESeq(dds)
+  # You may want to specify the comparison of any two levels of condition
+  cat("contrast conditions: ", contrast[1], " vs ", contrast[2])
+  res <- results(dds, contrast=contrast, alpha = qval)
+  
+  return(res[complete.cases(res),])
+  
+}
+
+#' Violin plot.
+#' 
+#' Violin plot for specific gene in expression matrix.
+#' @import ggplot2
+#' @import ggthemes
+#' @param mat Expression matrix.
+#' @param gene Gene id in rownames of mat.
+#' @param level Level in colnames of mat.
+#' @param levels Factor, custom level define by user.
+#' @param color Vector of rgb color indices for violin.
+#' @param log Boolen value, log transform the expression or not.
+#' @param jitter Boolen value, plot dots or not.
+#' @return ggplot2 object
+#' @export
+violinPlot <- function(mat, gene, level=NULL, levels=NULL, color = NULL, log=TRUE, jitter=FALSE){
+  if (!gene %in% rownames(mat)){
+    stop("Gene ", gene, " is not in mat")
+  }
+  if (is.null(levels)){
+    mask <- gsub(paste0("(",paste0(level, collapse = "|"),").*"),"\\1",colnames(mat))
+    mat <- mat[,mask %in% level]
+    days <- factor(mask[mask %in% level], levels = level)
+  }
+  else{
+    days <- levels
+  }
+  if (log){
+    df <- data.frame(exp = log2(as.numeric(mat[gene,]) + 1), level = days)
+  }
+  else{
+    df <- data.frame(exp = as.numeric(mat[gene,]), level = days)
+  }
+  # xticklabs <- levels(days)
+  p <- ggplot(df, aes(factor(level), exp))
+  p <- p + geom_violin(aes(fill = factor(days)),
+                       scale = "width",
+                       trim = TRUE, 
+                       adjust = 1) + 
+           labs(title = paste0(gene," Expression"),
+                fill="Days",
+                x = "Days", 
+                y = expression(paste(log["2"]," Expression"))) +
+           theme_stata(scheme = "s1mono") +
+           theme(axis.ticks = element_blank(),
+                 axis.title.x = element_text(margin = margin(t = 8)),
+                 axis.title.y = element_text(margin = margin(r = 10)))
+  
+  if (jitter){
+    p <- p + geom_jitter(height = 0,
+                         width = 0.2)
+  }
+  if (!is.null(color)){
+    p <- p + scale_colour_manual(values = color)
+  }
+  else{
+    p <- p + scale_fill_ptol()
+  }
+  
+  p
   
 }
