@@ -13,6 +13,7 @@ Imports:
     apcluster,
     BiocGenerics,
     corpcor,
+    DESeq2,
     glmnet,
     GO.db,
     ggplot2,
@@ -24,7 +25,9 @@ Imports:
     networkD3,
     nnet,
     org.Mm.eg.db,
+    org.Hs.eg.db,
     pheatmap,
+    SNFtool,
     stats,
     TSP,
     topGO
