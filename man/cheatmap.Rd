@@ -9,7 +9,8 @@ cheatmap(mat, filename = NA, vmax = 2, vmin = -1, log = FALSE,
   cluster_cols = TRUE, gene_labels = NULL, cell_labels = NULL,
   gene_order = NULL, cell_order = NULL, gaps_row = NULL,
   gaps_col = NULL, anno_row = NA, anno_col = NA, plot_gaps_row = TRUE,
-  plot_gaps_col = TRUE, re_write_labels = FALSE, ...)
+  plot_gaps_col = TRUE, re_write_gene_labels = FALSE,
+  re_write_cell_labels = FALSE, ...)
 }
 \arguments{
 \item{mat}{Expression matrix, columns are cells and rows are genes.}
@@ -52,7 +53,9 @@ cheatmap(mat, filename = NA, vmax = 2, vmin = -1, log = FALSE,
 
 \item{plot_gaps_col}{Make gaps on column.}
 
-\item{re_write_labels}{Re-write clustering labels to an ordered sequeence.}
+\item{re_write_gene_labels}{Re-write gene labels to an ordered sequeence.}
+
+\item{re_write_cell_labels}{Re-write cell labels to an ordered sequeence.}
 
 \item{...}{Additional arguments passed on to pheatmap.}
 }

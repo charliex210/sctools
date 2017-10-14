@@ -5,7 +5,7 @@
 \title{Gene ontology enrichment analysis of gene clusters.}
 \usage{
 go_enrich(gene_labels, method = "weight01", save_dir = NA, nodeSize = 30,
-  showNodes = 15, width = 16, height = 12)
+  showNodes = 15, topNodes = 50, width = 12, height = 10)
 }
 \arguments{
 \item{gene_labels}{Data frame of gene names with cluster labels.}

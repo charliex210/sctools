@@ -5,18 +5,20 @@
 \title{Find clustering order using TSP algorithm.}
 \usage{
 find_order(mat, labels, reverse = FALSE, metric = "pearson",
-  method = "farthest_insertion")
+  method = "farthest_insertion", seed = 1)
 }
 \arguments{
 \item{mat}{Expression matrix, columns are cells and rows are genes.}
 
-\item{labels}{Cluster labels on the column of mat.}
+\item{labels}{Cluster labels on the row of mat.}
 
 \item{reverse}{Reverse the path.}
 
 \item{metric}{Metric used to compute the paired distance - default is pearson correlation distance.}
 
 \item{method}{Method to solve the TSP, see \code{\link[TSP]{solve_TSP}}.}
+
+\item{seed}{Random seed.}
 }
 \value{
 Path indice of the clusters.
