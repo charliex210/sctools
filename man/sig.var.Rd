@@ -24,7 +24,7 @@ sig.var(mat, r = NULL, s = 100, B = 400, adj.method = "fdr",
 
 \item{verbose}{A logical specifying to print the computational progress.}
 
-\item{...}{Additional arguments passed on to \code{\link[jackstraw]{jackstraw.PCA}}.}
+\item{...}{Additional arguments passed on to \code{\link[jackstraw]{jackstraw_pca}}.}
 }
 \value{
 Statistical results of jackstraw.
