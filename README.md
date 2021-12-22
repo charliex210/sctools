@@ -7,7 +7,7 @@ Some packages need to be installed before sctools,
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-BiocManager::install(c("org.Hs.eg.db","topGO","lfa"))
+BiocManager::install(c("org.Mm.eg.db","org.Hs.eg.db","topGO","lfa"))
 ```
 
 To install development version from GitHub, use the __devtools__ package,
