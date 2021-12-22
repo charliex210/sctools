@@ -146,35 +146,6 @@ apclusK <- function(mat,
   }
 }
 
-#' Retrieve genes with high correlation with existing pattern.
-#' 
-#' Retrieve genes with high correlation with the exemplars of affinity propagation clustering results.
-#' @param mat Gene expression matrix, columns are cells and rows are genes.
-#' @param apres Dataframe of affinity propagation clustering results.
-#' @param q The treshold of adjust p-value of correlation coefficient. Genes with p-value less than q will be retrieved to the gene expression matrix
-#' @param method Correction method for p-value, see \code{\link[stats]{p.adjust}}. 
-#' @param ... Additional arguments passed on to \code{\link{p.cor}}.
-#' @return Dataframe with selected genes and found genes.
-#' @export
-call.back <- function(mat,
-                      apres,
-                      q = 0.01,
-                      method = "BH",
-                      ...){
-  
-  if (!all(rownames(apres) %in% rownames(mat))){
-    stop("Gene expression matrix and AP results are not matched")
-  }
-  exemplars <- rownames(apres)[apres$exemplars]
-  fil <- setdiff(rownames(mat),rownames(apres))
-  p.adj <- p.cor(x = t(mat[fil,]), y = t(mat[exemplars,]), correct = method)$p.adj
-  ret <- rownames(p.adj[rowSums(p.adj < q) > 0,])
-  ret_mat <- mat[c(rownames(apres),ret),]
-  
-  return(ret_mat)
-  
-}
-
 #' Calculate the p-value of correlation coefficient.
 #' 
 #' Calculate the significant level of correlation coefficient.
