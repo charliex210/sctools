@@ -2,7 +2,6 @@
 
 export(FetchGO)
 export(alter_label)
-export(annofactor)
 export(apclusK)
 export(aspecc)
 export(call.back)

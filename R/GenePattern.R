@@ -587,7 +587,7 @@ go_enrich <- function(gene_labels,
 #' Fetch ensembl ids of specific GO term id.
 #' @import org.Mm.eg.db
 #' @import org.Hs.eg.db
-#' @param term GO term id, forexample "GO:0001049".
+#' @param term GO term id, forexample "GO:0031386".
 #' @param species Mouse or human database to used. Mouse: mMus, Human: Hs
 #' @return Ensembl id of specifc GO term
 #' @export
