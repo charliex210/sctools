@@ -176,23 +176,6 @@ aspecc <- function(Dist, numk = NULL, ka=10, kNN=NULL, type = 3, estimateRage = 
   
 }
 
-#' Extract level of reprogramming cells.
-#' 
-#' Extract level of reprogramming cells.
-#' @param mat Expression matrix.
-#' @return factor represents timepoints
-#' @export
-annofactor <- function(mat){
-  cells <- colnames(mat)
-  days <- gsub("(mef|osk_d0|osk_d1|osk_d2|osk_d3|osk_d4|osk_d5|osk_d6|osk_d7|osk_d8|ips|ovsvk_d0|ovsvk_d1|ovsvk_d2|ovsvk_d3|ovsvk_d4|esc).*",
-               "\\1",
-               cells)
-  lv <- c("mef","osk_d0","osk_d1","osk_d2","osk_d3","osk_d4","osk_d5","osk_d6","osk_d7","osk_d8","ips","ovsvk_d0","ovsvk_d1","ovsvk_d2","ovsvk_d3","ovsvk_d4","esc")
-  
-  return(factor(days,levels = lv[lv %in% unique(days)]))
-  
-}
-
 #' Detect outliers.
 #' 
 #' Use Isolation Forest algorithm to detect outliers of cells.
