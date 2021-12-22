@@ -151,8 +151,8 @@ apclusK <- function(mat,
 #' Calculate the significant level of correlation coefficient.
 #' @importFrom stats cor pt p.adjust
 #' @importFrom grDevices pdf dev.off
-#' @param x A numeric vector, matrix or data frame.
-#' @param y NULL (default) or a vector, matrix or data frame with compatible dimensions to x. The default is equivalent to y = x (but more efficient).
+#' @param x A matrix or data frame.
+#' @param y NULL (default) or a matrix or data frame with compatible dimensions to x. The default is equivalent to y = x (but more efficient).
 #' @param method A character string indicating which correlation coefficient (or covariance) is to be computed. One of "pearson" (default), "kendall", or "spearman": can be abbreviated.
 #' @param correct Correction method for p-value, see \code{\link[stats]{p.adjust}}.
 #' @param ... Additional arguments passed on to \code{\link[stats]{cor}}.
