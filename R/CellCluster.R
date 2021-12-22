@@ -35,7 +35,7 @@ sig.pcs <- function(mat, B = 20, threshold = 0.05, log = TRUE, scale = TRUE){
 #' Discover high discriminant genes in unsupervised manner
 #' 
 #' Calculate statistical significance of variables driving latent variation using jackstraw
-#' @importFrom jackstraw jackstraw_PCA
+#' @importFrom jackstraw jackstraw_pca
 #' @importFrom stats p.adjust
 #' @import corpcor
 #' @param mat Gene expression matrix, columns are cells and rows are genes.
@@ -46,7 +46,7 @@ sig.pcs <- function(mat, B = 20, threshold = 0.05, log = TRUE, scale = TRUE){
 #' @param log Comppute PCA of logarithm.
 #' @param scale Scale the gene expression.
 #' @param verbose	A logical specifying to print the computational progress.
-#' @param ... Additional arguments passed on to \code{\link[jackstraw]{jackstraw_PCA}}.
+#' @param ... Additional arguments passed on to \code{\link[jackstraw]{jackstraw_pca}}.
 #' @return Statistical results of jackstraw.
 #' @export
 sig.var <- function(mat,
@@ -66,7 +66,7 @@ sig.var <- function(mat,
     mat <- t(scale(t(mat)))
   }
   # cat(head(mat))
-  js.pca <- jackstraw_PCA(mat, r = r, s = s, B = B, verbose = verbose, ...)
+  js.pca <- jackstraw_pca(mat, r = r, s = s, B = B, verbose = verbose, ...)
   padj <- p.adjust(js.pca$p.value, method = adj.method)
   names(padj) <- rownames(mat)
   js.pca$padj <- padj
