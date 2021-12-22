@@ -1,4 +1,4 @@
-#' Variable selction based on elasticnet penalty.
+#' Variable selction based on ElasticNet penalty.
 #' 
 #' Fits a multinomial model via penalized maximum likelihood.
 #' @import glmnet
