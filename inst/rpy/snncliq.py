@@ -305,14 +305,14 @@ def snn_cliq(snn,merge_cutoff=0.5,r_cutoff=0.7,number_cells=None):
     max_ID=results[1]
     if number_cells is None:
     	number_cells=max_ID
-    print "find "+str(len(cliques))+" quasi-cliques"
+    print("find "+str(len(cliques))+" quasi-cliques")
     merge_cliques=[]
     merge_cliques=merge(cliques, merge_cutoff)
     
     number_of_clusters = len(merge_cliques)
-    print merge_cliques
+    # print merge_cliques
     
-    print "merged into "+str(number_of_clusters)+" clusters"
+    print("merged into "+str(number_of_clusters)+" clusters")
     cl.append(len(merge_cliques))
     uniq_cliques=[]
     uniq_cliques=uniq(merge_cliques, snn)
